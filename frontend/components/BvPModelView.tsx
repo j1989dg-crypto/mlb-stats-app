@@ -853,58 +853,60 @@ function PitcherSlotSplitsWidget({ splits }: { splits: PitcherSlotSplits | null 
   };
 
   return (
-    <div style={{ marginTop: '16px', borderTop: '1px dashed rgba(255,255,255,0.08)', paddingTop: '12px' }}>
-      <div style={{ fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '8px', letterSpacing: '0.04em' }}>
-        <strong style={{ color: 'var(--text-secondary)' }}>{splits.name.toUpperCase()}</strong> · VS. LINEUP SLOT{' '}
-        {splits.weak_slots.length > 0 && (
-          <span style={{ color: '#ff1744', textTransform: 'none' }}>
-            🔥 Weak: {weakStr}
-          </span>
-        )}
-      </div>
-      
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(9, 1fr)', gap: '4px' }}>
-        {Array.from({ length: 9 }).map((_, idx) => {
-          const slotNum = (idx + 1).toString();
-          const slot = splits.slots[slotNum] || { ops: '0.000', hr: 0 };
-          const s = getBoxStyles(slotNum, slot.ops);
-          
-          return (
-            <div key={slotNum} style={{
-              background: s.bg,
-              border: s.border,
-              borderRadius: '6px',
-              padding: '4px 2px',
-              textAlign: 'center',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center',
-              minHeight: '44px',
-            }}>
-              <span style={{ fontSize: '0.7rem', fontWeight: 900, color: s.color }}>{slotNum}</span>
-              <span style={{ fontSize: '0.52rem', color: s.valueColor, display: 'flex', alignItems: 'center', gap: '1px', margin: '2px 0 1px 0', height: '10px' }}>
-                {slot.hr > 0 ? (
-                  <>
-                    {slot.hr}
-                    <span style={{ fontSize: '0.55rem' }}>💣</span>
-                  </>
-                ) : (
-                  <span style={{ visibility: 'hidden' }}>-</span>
-                )}
-              </span>
-              <span style={{ fontSize: '0.52rem', fontWeight: 700, color: s.valueColor }}>
-                {parseFloat(slot.ops) > 0 ? parseFloat(slot.ops).toFixed(2).replace('0.', '.') : '.00'}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-      
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px', fontSize: '0.52rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-        <span>1st</span>
-        <span>← lineup slot →</span>
-        <span>9th</span>
+    <div style={{ marginTop: '16px', borderTop: '1px dashed rgba(255,255,255,0.08)', paddingTop: '12px', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+      <div style={{ minWidth: '180px' }}>
+        <div style={{ fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '8px', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>
+          <strong style={{ color: 'var(--text-secondary)' }}>{splits.name.toUpperCase()}</strong> · VS. SLOT{' '}
+          {splits.weak_slots.length > 0 && (
+            <span style={{ color: '#ff1744', textTransform: 'none' }}>
+              🔥 Weak: {weakStr}
+            </span>
+          )}
+        </div>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(9, 1fr)', gap: '3px' }}>
+          {Array.from({ length: 9 }).map((_, idx) => {
+            const slotNum = (idx + 1).toString();
+            const slot = splits.slots[slotNum] || { ops: '0.000', hr: 0 };
+            const s = getBoxStyles(slotNum, slot.ops);
+            
+            return (
+              <div key={slotNum} style={{
+                background: s.bg,
+                border: s.border,
+                borderRadius: '6px',
+                padding: '4px 1px',
+                textAlign: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                minHeight: '44px',
+              }}>
+                <span style={{ fontSize: '0.7rem', fontWeight: 900, color: s.color }}>{slotNum}</span>
+                <span style={{ fontSize: '0.52rem', color: s.valueColor, display: 'flex', alignItems: 'center', gap: '1px', margin: '2px 0 1px 0', height: '10px' }}>
+                  {slot.hr > 0 ? (
+                    <>
+                      {slot.hr}
+                      <span style={{ fontSize: '0.55rem' }}>💣</span>
+                    </>
+                  ) : (
+                    <span style={{ visibility: 'hidden' }}>-</span>
+                  )}
+                </span>
+                <span style={{ fontSize: '0.52rem', fontWeight: 700, color: s.valueColor }}>
+                  {parseFloat(slot.ops) > 0 ? parseFloat(slot.ops).toFixed(2).replace('0.', '.') : '.00'}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+        
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px', fontSize: '0.52rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+          <span>1st</span>
+          <span>← lineup slot →</span>
+          <span>9th</span>
+        </div>
       </div>
     </div>
   );
