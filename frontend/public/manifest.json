@@ -1,0 +1,50 @@
+{
+  "name": "MLB Stats — AI Analysis",
+  "short_name": "MLB Stats",
+  "description": "AI-powered MLB stats: live home runs, batter vs pitcher matchups, HR model predictions, live pitch tracking and more.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#080D1A",
+  "theme_color": "#080D1A",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "categories": ["sports", "utilities"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Live Home Runs",
+      "short_name": "Live HRs",
+      "description": "Track live home runs across all today's games",
+      "url": "/live-hrs",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "BvP Model",
+      "short_name": "BvP",
+      "description": "Batter vs Pitcher matchup predictions",
+      "url": "/bvp-model",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "HR Model",
+      "short_name": "HR Model",
+      "description": "Home run probability predictions",
+      "url": "/hr-model",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
