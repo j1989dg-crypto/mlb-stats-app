@@ -1151,11 +1151,14 @@ export default function BvPModelView({ data }: { data: { game_date: string; tota
             max-width: 100% !important; width: 100% !important;
             min-width: 0 !important; position: static !important;
             flex: none !important;
+            overflow: hidden !important;
           }
           .bvp-pitcher-list {
             flex-direction: row !important;
+            flex-wrap: nowrap !important;
             overflow-x: auto !important;
             scrollbar-width: none !important;
+            -webkit-overflow-scrolling: touch !important;
           }
           .bvp-pitcher-item {
             flex-shrink: 0 !important;
