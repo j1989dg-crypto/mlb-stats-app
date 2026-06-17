@@ -179,7 +179,15 @@ function StatBar({ label, value, max, fmt, color = '#4361ee' }: {
   );
 }
 
-/* ─── BvP Flyout Panel ───────────────────────────────────────────────────── */
+/* ─── BvP Flyout Panel (Tabbed Mobile-First Bottom Sheet) ───────────────── */
+const BVP_TABS = [
+  { id: 'overview',  label: '📊 Overview' },
+  { id: 'bvp',       label: '⚔️ Career BvP' },
+  { id: 'statcast',  label: '🔬 Statcast' },
+  { id: 'pitching',  label: '⚾ Pitching' },
+  { id: 'splits',    label: '📈 Splits' },
+  { id: 'park',      label: '🏟️ Park' },
+];
 function BvPFlyout({
   data, loading, onClose,
 }: {
@@ -187,434 +195,371 @@ function BvPFlyout({
   loading: boolean;
   onClose: () => void;
 }) {
+  const [activeTab, setActiveTab] = useState('overview');
+
   return (
     <>
       {/* Backdrop */}
       <div
         onClick={onClose}
         style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)',
-          zIndex: 200, backdropFilter: 'blur(4px)',
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+          zIndex: 200, backdropFilter: 'blur(6px)',
           animation: 'fadeIn 0.2s ease',
         }}
       />
-      {/* Panel */}
+      {/* Bottom sheet panel */}
       <div style={{
-        position: 'fixed', right: 0, top: 0, bottom: 0,
-        width: 'min(480px, 100vw)',
-        background: 'rgba(10,14,28,0.98)',
-        borderLeft: '1px solid rgba(67,97,238,0.25)',
-        overflowY: 'auto', zIndex: 201,
-        animation: 'slideInRight 0.28s ease',
-        padding: '0 0 3rem 0',
+        position: 'fixed',
+        bottom: 0, left: 0, right: 0,
+        height: '92dvh',
+        background: 'rgba(10,14,28,0.99)',
+        borderTop: '1px solid rgba(67,97,238,0.3)',
+        borderRadius: '20px 20px 0 0',
+        display: 'flex', flexDirection: 'column',
+        zIndex: 201,
+        animation: 'slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1)',
       }}>
-        {/* Close */}
-        <button
-          onClick={onClose}
-          style={{
-            position: 'sticky', top: 0, left: 0,
-            width: '100%', padding: '14px 20px',
-            background: 'rgba(10,14,28,0.95)',
-            borderBottom: '1px solid rgba(255,255,255,0.06)',
-            display: 'flex', alignItems: 'center', gap: '8px',
-            cursor: 'pointer', border: 'none', color: 'var(--text-muted)',
-            fontSize: '0.8rem', fontWeight: 700, zIndex: 1,
-          }}
-        >
-          ✕ Close
-        </button>
+        {/* Drag handle */}
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 4px' }}>
+          <div style={{ width: '40px', height: '4px', borderRadius: '2px', background: 'rgba(255,255,255,0.2)' }} />
+        </div>
+
+        {/* Header row: player names + close */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '4px 16px 10px',
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
+        }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {loading ? (
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>Loading...</div>
+            ) : data ? (
+              <>
+                <div style={{ fontSize: '0.95rem', fontWeight: 900, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {data.batter.name} <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>vs</span> {data.pitcher.name}
+                </div>
+                <div style={{ display: 'flex', gap: '6px', marginTop: '4px', flexWrap: 'wrap' }}>
+                  <span style={{
+                    background: data.platoon_adv ? 'rgba(0,230,118,0.15)' : 'rgba(255,255,255,0.06)',
+                    color: data.platoon_adv ? '#00e676' : 'var(--text-muted)',
+                    border: `1px solid ${data.platoon_adv ? 'rgba(0,230,118,0.3)' : 'rgba(255,255,255,0.1)'}`,
+                    borderRadius: '6px', padding: '2px 8px', fontSize: '0.65rem', fontWeight: 700,
+                  }}>{data.platoon_label}</span>
+                  {data.slot_label && (
+                    <span style={{
+                      background: parseFloat(data.slot_ops || '0') >= 0.800 ? 'rgba(255,23,68,0.15)' : 'rgba(0,188,212,0.15)',
+                      color: parseFloat(data.slot_ops || '0') >= 0.800 ? '#ff1744' : '#00bcd4',
+                      border: `1px solid ${parseFloat(data.slot_ops || '0') >= 0.800 ? 'rgba(255,23,68,0.3)' : 'rgba(0,188,212,0.3)'}`,
+                      borderRadius: '6px', padding: '2px 8px', fontSize: '0.65rem', fontWeight: 700,
+                    }}>🎯 {data.slot_label}</span>
+                  )}
+                </div>
+              </>
+            ) : null}
+          </div>
+          <button onClick={onClose} style={{
+            background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: '50%',
+            width: '32px', height: '32px', cursor: 'pointer', color: 'var(--text-muted)',
+            fontSize: '1rem', fontWeight: 700, flexShrink: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>✕</button>
+        </div>
 
         {loading && (
-          <div style={{ textAlign: 'center', padding: '4rem 2rem', color: 'var(--text-muted)' }}>
-            <div style={{ fontSize: '2.5rem', marginBottom: '1rem', animation: 'pulse 1.5s ease-in-out infinite' }}>⚡</div>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '12px', color: 'var(--text-muted)' }}>
+            <div style={{ fontSize: '2.5rem', animation: 'pulse 1.5s ease-in-out infinite' }}>⚡</div>
             <p style={{ fontWeight: 600 }}>Loading matchup data...</p>
           </div>
         )}
 
         {!loading && data && (
-          <div style={{ padding: '1.5rem' }}>
-            {/* Header */}
-            <div style={{ marginBottom: '1.5rem' }}>
-              <div style={{ fontSize: '0.6rem', fontWeight: 800, color: 'var(--accent-blue-light)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '6px' }}>
-                Batter vs. Pitcher Analysis
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                <div>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 900, color: 'var(--text-primary)' }}>{data.batter.name}</div>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{data.batter.team} · {data.batter.pos || ''} · Bats {data.batter.bats}</div>
-                </div>
-                <div style={{ fontSize: '1.1rem', color: 'var(--text-muted)', margin: '0 4px' }}>vs.</div>
-                <div>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 900, color: 'var(--text-primary)' }}>{data.pitcher.name}</div>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{data.pitcher.team} · Throws {data.pitcher.throws}{data.pitcher.era ? ` · ERA ${data.pitcher.era}` : ''}</div>
-                </div>
-              </div>
-
-              {/* Platoon badge & Lineup Slot Weakness badge */}
-              <div style={{ marginTop: '10px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                <span style={{
-                  background: data.platoon_adv ? 'rgba(0,230,118,0.15)' : 'rgba(255,255,255,0.06)',
-                  color: data.platoon_adv ? '#00e676' : 'var(--text-muted)',
-                  border: `1px solid ${data.platoon_adv ? 'rgba(0,230,118,0.3)' : 'rgba(255,255,255,0.1)'}`,
-                  borderRadius: '8px', padding: '4px 12px',
-                  fontSize: '0.7rem', fontWeight: 700,
-                }}>{data.platoon_label}</span>
-
-                {data.slot_label && (
-                  <span style={{
-                    background: parseFloat(data.slot_ops || '0') >= 0.800 ? 'rgba(255,23,68,0.15)' : 'rgba(0,188,212,0.15)',
-                    color: parseFloat(data.slot_ops || '0') >= 0.800 ? '#ff1744' : '#00bcd4',
-                    border: `1px solid ${parseFloat(data.slot_ops || '0') >= 0.800 ? 'rgba(255,23,68,0.3)' : 'rgba(0,188,212,0.3)'}`,
-                    borderRadius: '8px', padding: '4px 12px',
-                    fontSize: '0.7rem', fontWeight: 700,
-                  }}>
-                    🎯 {data.slot_label}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Score row */}
+          <>
+            {/* Score strip — always visible */}
             <div style={{
               display: 'grid', gridTemplateColumns: '1fr 1fr 1fr',
-              gap: '12px', marginBottom: '1.5rem',
-              background: 'rgba(255,255,255,0.03)', borderRadius: '14px',
-              border: '1px solid rgba(255,255,255,0.07)', padding: '1.25rem',
+              gap: '8px', padding: '10px 16px',
+              background: 'rgba(255,255,255,0.02)',
+              borderBottom: '1px solid rgba(255,255,255,0.05)',
             }}>
               <ScoreBadge value={data.scores.overall}       color={data.scores.color}         label="BvP Edge" />
               <ScoreBadge value={data.scores.power_score}   color={data.scores.power_color}   label="Power" />
               <ScoreBadge value={data.scores.matchup_score} color={data.scores.matchup_color} label="Matchup" />
             </div>
 
-            {/* Advanced Context: Batter wRC+ & Pitcher xFIP */}
-            {(data.fg_batter?.wrc_plus || data.fg_pitcher?.xfip) && (
-              <Section title="Advanced Quality Context">
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '1rem' }}>
-                  {data.fg_batter?.wrc_plus !== undefined && (
-                    <div style={{ background: 'rgba(67,97,238,0.05)', border: '1px solid rgba(67,97,238,0.15)', borderRadius: '10px', padding: '10px 12px' }}>
-                      <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Batter wRC+</div>
-                      <div style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--accent-blue-light)', marginTop: '4px' }}>
-                        {data.fg_batter.wrc_plus || '--'}
+            {/* Scrollable tab strip */}
+            <div style={{
+              display: 'flex', overflowX: 'auto', gap: '4px',
+              padding: '8px 12px',
+              borderBottom: '1px solid rgba(255,255,255,0.06)',
+              scrollbarWidth: 'none',
+            }}>
+              {BVP_TABS.map(tab => (
+                <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
+                  flexShrink: 0, padding: '6px 14px', borderRadius: '20px', border: 'none',
+                  cursor: 'pointer', fontSize: '0.72rem', fontWeight: 700, transition: 'all 0.2s',
+                  background: activeTab === tab.id ? 'rgba(67,97,238,0.25)' : 'rgba(255,255,255,0.05)',
+                  color: activeTab === tab.id ? 'var(--accent-blue-light)' : 'var(--text-muted)',
+                  boxShadow: activeTab === tab.id ? '0 0 0 1px rgba(67,97,238,0.5)' : 'none',
+                }}>{tab.label}</button>
+              ))}
+            </div>
+
+            {/* Tab content */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
+
+              {activeTab === 'overview' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {(data.fg_batter?.wrc_plus || data.fg_pitcher?.xfip) && (
+                    <Section title="Advanced Quality">
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
+                        {data.fg_batter?.wrc_plus !== undefined && (
+                          <div style={{ background: 'rgba(67,97,238,0.07)', border: '1px solid rgba(67,97,238,0.18)', borderRadius: '12px', padding: '12px' }}>
+                            <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Batter wRC+</div>
+                            <div style={{ fontSize: '1.8rem', fontWeight: 900, color: 'var(--accent-blue-light)', marginTop: '4px' }}>{data.fg_batter.wrc_plus || '--'}</div>
+                            <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)', marginTop: '2px' }}>Avg = 100</div>
+                          </div>
+                        )}
+                        {data.fg_pitcher?.xfip !== undefined && (
+                          <div style={{ background: 'rgba(255,23,68,0.07)', border: '1px solid rgba(255,23,68,0.18)', borderRadius: '12px', padding: '12px' }}>
+                            <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Pitcher xFIP</div>
+                            <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#ff1744', marginTop: '4px' }}>{data.fg_pitcher.xfip ? data.fg_pitcher.xfip.toFixed(2) : '--'}</div>
+                            <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)', marginTop: '2px' }}>Lower = dominant</div>
+                          </div>
+                        )}
                       </div>
-                      <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)', marginTop: '2px' }}>League Average: 100</div>
-                    </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
+                        <MiniStat label="WAR" value={data.fg_batter?.war != null ? data.fg_batter.war.toFixed(1) : '--'} />
+                        <MiniStat label="SIERA" value={data.fg_pitcher?.siera != null ? data.fg_pitcher.siera.toFixed(2) : '--'} />
+                        <MiniStat label="K-BB%" value={data.fg_pitcher?.k_bb_pct != null ? `${data.fg_pitcher.k_bb_pct.toFixed(1)}%` : '--'} />
+                      </div>
+                    </Section>
                   )}
-                  {data.fg_pitcher?.xfip !== undefined && (
-                    <div style={{ background: 'rgba(255,23,68,0.05)', border: '1px solid rgba(255,23,68,0.15)', borderRadius: '10px', padding: '10px 12px' }}>
-                      <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Pitcher xFIP</div>
-                      <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#ff1744', marginTop: '4px' }}>
-                        {data.fg_pitcher.xfip ? data.fg_pitcher.xfip.toFixed(2) : '--'}
-                      </div>
-                      <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)', marginTop: '2px' }}>Lower is more dominant</div>
+                  <Section title="Recent Form (Last 30 Games)">
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
+                      {[{ label: 'PA', val: data.recent_form.pa }, { label: 'HR', val: data.recent_form.hr }, { label: 'AVG', val: data.recent_form.avg }, { label: 'SLG', val: data.recent_form.slg }].map(s => (
+                        <div key={s.label} style={{ textAlign: 'center', background: 'rgba(255,255,255,0.04)', borderRadius: '12px', padding: '12px 6px' }}>
+                          <div style={{ fontSize: '1.1rem', fontWeight: 800, color: data.recent_form.hot ? '#00e676' : 'var(--text-primary)' }}>{s.val}</div>
+                          <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', marginTop: '2px' }}>{s.label}</div>
+                        </div>
+                      ))}
                     </div>
+                    {data.recent_form.hot && <div style={{ marginTop: '10px', textAlign: 'center', fontSize: '0.78rem', color: '#00e676', fontWeight: 700 }}>🔥 Batter is HOT in recent form</div>}
+                  </Section>
+                  {data.l7_trend && (
+                    <Section title="Hot/Cold Streak Trend">
+                      <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '12px', padding: '12px', border: `1px solid ${data.l7_trend.trend_color}33` }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 800, color: data.l7_trend.trend_color }}>{data.l7_trend.trend_label}</span>
+                          <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>vs L30 {data.l7_trend.l30_ops.toFixed(3)}</span>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px' }}>
+                          {[{ label: 'L7 OPS', val: data.l7_trend.l7_ops.toFixed(3), sub: `AVG ${data.l7_trend.l7_avg}`, hr: data.l7_trend.l7_hr }, { label: 'L14 OPS', val: data.l7_trend.l14_ops.toFixed(3), sub: `AVG ${data.l7_trend.l14_avg}`, hr: data.l7_trend.l14_hr }, { label: 'L30 OPS', val: data.l7_trend.l30_ops.toFixed(3), sub: 'Baseline', hr: null }].map(t => (
+                            <div key={t.label} style={{ textAlign: 'center', background: 'rgba(255,255,255,0.04)', borderRadius: '8px', padding: '10px 4px' }}>
+                              <div style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--text-primary)' }}>{t.val}</div>
+                              <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginTop: '2px' }}>{t.label}</div>
+                              <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)', marginTop: '1px' }}>{t.sub}</div>
+                              {t.hr != null && t.hr > 0 && <div style={{ fontSize: '0.6rem', marginTop: '2px' }}>{t.hr} HR 💣</div>}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </Section>
                   )}
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
-                  <MiniStat label="WAR" value={data.fg_batter?.war !== undefined && data.fg_batter.war !== null ? data.fg_batter.war.toFixed(1) : '--'} />
-                  <MiniStat label="SIERA" value={data.fg_pitcher?.siera !== undefined && data.fg_pitcher.siera !== null ? data.fg_pitcher.siera.toFixed(2) : '--'} />
-                  <MiniStat label="K-BB%" value={data.fg_pitcher?.k_bb_pct !== undefined && data.fg_pitcher.k_bb_pct !== null ? `${data.fg_pitcher.k_bb_pct.toFixed(1)}%` : '--'} />
-                </div>
-              </Section>
-            )}
-
-            {/* Career BvP */}
-            <Section title="Career BvP Record">
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px', marginBottom: '8px' }}>
-                {[
-                  { label: 'PA',  val: data.career_bvp.pa },
-                  { label: 'AB',  val: data.career_bvp.ab },
-                  { label: 'HR',  val: data.career_bvp.hr },
-                  { label: 'AVG', val: data.career_bvp.avg },
-                  { label: 'OPS', val: data.career_bvp.ops },
-                ].map(s => (
-                  <div key={s.label} style={{ textAlign: 'center', background: 'rgba(255,255,255,0.04)', borderRadius: '10px', padding: '10px 6px' }}>
-                    <div style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)' }}>{s.val}</div>
-                    <div style={{ fontSize: '0.58rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', marginTop: '2px' }}>{s.label}</div>
-                  </div>
-                ))}
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px' }}>
-                {[
-                  { label: 'OBP', val: data.career_bvp.obp || '.---' },
-                  { label: 'SLG', val: data.career_bvp.slg || '.---' },
-                  { label: '2B',  val: data.career_bvp.doubles || 0 },
-                  { label: 'BB',  val: data.career_bvp.bb || 0 },
-                  { label: 'SO',  val: data.career_bvp.so || 0 },
-                ].map(s => (
-                  <div key={s.label} style={{ textAlign: 'center', background: 'rgba(255,255,255,0.02)', borderRadius: '10px', padding: '8px 4px' }}>
-                    <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-secondary)' }}>{s.val}</div>
-                    <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', marginTop: '2px' }}>{s.label}</div>
-                  </div>
-                ))}
-              </div>
-              {data.career_bvp.pa === 0 && (
-                <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '8px', textAlign: 'center' }}>No career matchup history found</p>
-              )}
-            </Section>
-
-            {/* Splits & Platoon Matchups */}
-            <Section title="Splits breakdown">
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
-                <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '8px', padding: '10px' }}>
-                  <div style={{ fontSize: '0.62rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '6px' }}>Batter Home / Away</div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem' }}>
-                    <span>Home OPS:</span>
-                    <strong style={{ color: 'var(--text-primary)' }}>{data.batter_splits?.home?.ops || '.---'}</strong>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', marginTop: '4px' }}>
-                    <span>Away OPS:</span>
-                    <strong style={{ color: 'var(--text-primary)' }}>{data.batter_splits?.away?.ops || '.---'}</strong>
-                  </div>
-                </div>
-                <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '8px', padding: '10px' }}>
-                  <div style={{ fontSize: '0.62rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '6px' }}>Pitcher Home / Away</div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem' }}>
-                    <span>Home OPS:</span>
-                    <strong style={{ color: 'var(--text-primary)' }}>{data.pitcher_splits?.home?.ops || '.---'}</strong>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', marginTop: '4px' }}>
-                    <span>Away OPS:</span>
-                    <strong style={{ color: 'var(--text-primary)' }}>{data.pitcher_splits?.away?.ops || '.---'}</strong>
-                  </div>
-                </div>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '8px', padding: '10px' }}>
-                  <div style={{ fontSize: '0.62rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '6px' }}>Batter vs {data.pitcher.throws}HP</div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem' }}>
-                    <span>AVG / OPS:</span>
-                    <strong style={{ color: 'var(--text-primary)' }}>
-                      {data.batter_splits?.[data.pitcher.throws === 'R' ? 'vs_rhp' : 'vs_lhp']?.avg || '.---'} / {data.batter_splits?.[data.pitcher.throws === 'R' ? 'vs_rhp' : 'vs_lhp']?.ops || '.---'}
-                    </strong>
-                  </div>
-                </div>
-                <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '8px', padding: '10px' }}>
-                  <div style={{ fontSize: '0.62rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '6px' }}>Pitcher vs {data.batter.bats}HB</div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem' }}>
-                    <span>AVG / OPS:</span>
-                    <strong style={{ color: 'var(--text-primary)' }}>
-                      {data.pitcher_splits?.[data.batter.bats === 'L' ? 'vs_lhb' : 'vs_rhb']?.avg || '.---'} / {data.pitcher_splits?.[data.batter.bats === 'L' ? 'vs_lhb' : 'vs_rhb']?.ops || '.---'}
-                    </strong>
-                  </div>
-                </div>
-              </div>
-            </Section>
-
-            {/* Pitcher Recent Form */}
-            {data.pitcher_recent && data.pitcher_recent.games > 0 && (
-              <Section title={`Pitcher Recent Form (Last ${data.pitcher_recent.games} Starts)`}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', background: 'rgba(255,255,255,0.02)', borderRadius: '10px', padding: '10px' }}>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#ff5252' }}>{data.pitcher_recent.era}</div>
-                    <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>ERA</div>
-                  </div>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)' }}>{data.pitcher_recent.whip}</div>
-                    <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>WHIP</div>
-                  </div>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)' }}>{data.pitcher_recent.k_rate}%</div>
-                    <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>K%</div>
-                  </div>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)' }}>{data.pitcher_recent.ip}</div>
-                    <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>IP</div>
-                  </div>
-                </div>
-                {/* Days rest + pitch count row */}
-                {(data.pitcher_recent.days_rest != null || data.pitcher_recent.pitch_count_last != null) && (
-                  <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                    {data.pitcher_recent.days_rest != null && (
-                      <div style={{
-                        flex: 1, textAlign: 'center', borderRadius: '8px', padding: '8px',
-                        background: data.pitcher_recent.days_rest <= 3 ? 'rgba(255,23,68,0.1)' : data.pitcher_recent.days_rest >= 8 ? 'rgba(0,188,212,0.08)' : 'rgba(255,255,255,0.03)',
-                        border: `1px solid ${data.pitcher_recent.days_rest <= 3 ? 'rgba(255,23,68,0.25)' : data.pitcher_recent.days_rest >= 8 ? 'rgba(0,188,212,0.2)' : 'rgba(255,255,255,0.06)'}`,
-                      }}>
-                        <div style={{ fontSize: '1rem', fontWeight: 900, color: data.pitcher_recent.days_rest <= 3 ? '#ff1744' : data.pitcher_recent.days_rest >= 8 ? '#00bcd4' : 'var(--text-primary)' }}>
-                          {data.pitcher_recent.days_rest}d
-                        </div>
-                        <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginTop: '2px' }}>Days Rest</div>
-                        {data.pitcher_recent.days_rest <= 3 && <div style={{ fontSize: '0.6rem', color: '#ff1744', marginTop: '3px', fontWeight: 700 }}>⚠️ Short Rest</div>}
-                        {data.pitcher_recent.days_rest >= 8 && <div style={{ fontSize: '0.6rem', color: '#00bcd4', marginTop: '3px', fontWeight: 700 }}>💤 Extra Rest</div>}
-                      </div>
-                    )}
-                    {data.pitcher_recent.pitch_count_last != null && (
-                      <div style={{ flex: 1, textAlign: 'center', borderRadius: '8px', padding: '8px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                        <div style={{ fontSize: '1rem', fontWeight: 900, color: data.pitcher_recent.pitch_count_last >= 100 ? '#ff9800' : 'var(--text-primary)' }}>
-                          {data.pitcher_recent.pitch_count_last}
-                        </div>
-                        <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginTop: '2px' }}>Last Start Pitches</div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </Section>
-            )}
-
-            {/* Statcast power */}
-            <Section title="Statcast Power Metrics">
-              <StatBar label="Barrel %"       value={data.statcast.barrel_rate}   max={25}   fmt="pct" color="#ff6b35" />
-              <StatBar label="Avg Exit Velo"  value={data.statcast.avg_exit_velo} max={115}  fmt="mph" color="#4361ee" />
-              <StatBar label="Hard Hit %"     value={data.statcast.hard_hit_rate} max={65}   fmt="pct" color="#f72585" />
-              <StatBar label="xwOBA"          value={data.statcast.xwoba}         max={0.50} fmt="3f"  color="#7209b7" />
-              <StatBar label="ISO (Power)"    value={data.statcast.iso}           max={0.35} fmt="3f"  color="#3a0ca3" />
-              <StatBar label="xSLG"           value={data.statcast.xslg}          max={0.65} fmt="3f"  color="#4cc9f0" />
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '8px' }}>
-                <MiniStat label="Pull %" value={`${data.statcast.pull_pct.toFixed(1)}%`} />
-                <MiniStat label="Whiff %" value={`${data.statcast.whiff_rate.toFixed(1)}%`} />
-                <MiniStat label="Chase %" value={`${data.statcast.chase_pct.toFixed(1)}%`} />
-                <MiniStat label="Z-Contact %" value={`${data.statcast.z_contact.toFixed(1)}%`} />
-                <MiniStat label="K %" value={`${data.statcast.k_rate.toFixed(1)}%`} />
-                <MiniStat label="BB %" value={`${data.statcast.bb_rate.toFixed(1)}%`} />
-              </div>
-            </Section>
-
-            {/* Zone Contact weakness stats */}
-            {data.zone_stats && (data.zone_stats.in_zone_sample > 0 || data.zone_stats.out_zone_sample > 0) && (
-              <Section title="Zone swing/whiff matchup profile">
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', background: 'rgba(255,255,255,0.02)', borderRadius: '10px', padding: '12px' }}>
-                  <div>
-                    <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>In-Zone Whiff%</div>
-                    <div style={{ fontSize: '1.2rem', fontWeight: 800, color: data.zone_stats.in_zone_whiff_pct >= 25 ? '#ff1744' : '#00e676', marginTop: '4px' }}>
-                      {data.zone_stats.in_zone_whiff_pct.toFixed(1)}%
-                    </div>
-                    <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)', marginTop: '2px' }}>Sample: {data.zone_stats.in_zone_sample} swings</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Chase Whiff%</div>
-                    <div style={{ fontSize: '1.2rem', fontWeight: 800, color: data.zone_stats.out_zone_whiff_pct >= 40 ? '#ff1744' : '#00e676', marginTop: '4px' }}>
-                      {data.zone_stats.out_zone_whiff_pct.toFixed(1)}%
-                    </div>
-                    <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)', marginTop: '2px' }}>Sample: {data.zone_stats.out_zone_sample} swings</div>
-                  </div>
-                </div>
-              </Section>
-            )}
-
-            {/* Pitch matchup */}
-            {data.pitch_matchup.length > 0 && (
-              <Section title="Pitch-Type Matchup">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {data.pitch_matchup.map(p => (
-                    <div key={p.pitch_type} style={{
-                      background: 'rgba(255,255,255,0.04)', borderRadius: '10px',
-                      padding: '10px 12px',
-                      display: 'grid', gridTemplateColumns: '1fr auto',
-                      alignItems: 'center', gap: '8px',
-                    }}>
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-primary)' }}>{p.pitch_name}</span>
-                          {verdictBadge(p.verdict)}
-                        </div>
-                        <div style={{ display: 'flex', gap: '14px' }}>
-                          <span style={{ fontSize: '0.66rem', color: 'var(--text-muted)' }}>Usage <strong style={{ color: 'var(--text-secondary)' }}>{p.usage_pct.toFixed(0)}%</strong></span>
-                          {p.avg_velo && <span style={{ fontSize: '0.66rem', color: 'var(--text-muted)' }}>Velo <strong style={{ color: 'var(--text-secondary)' }}>{p.avg_velo.toFixed(1)} mph</strong></span>}
-                          <span style={{ fontSize: '0.66rem', color: 'var(--text-muted)' }}>Whiff <strong style={{ color: 'var(--text-secondary)' }}>{p.batter_whiff.toFixed(0)}%</strong></span>
-                        </div>
-                      </div>
-                      {p.batter_avg_ev > 0 && (
-                        <div style={{ textAlign: 'right' }}>
-                          <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#4cc9f0' }}>{p.batter_avg_ev.toFixed(1)}</div>
-                          <div style={{ fontSize: '0.58rem', color: 'var(--text-muted)' }}>avg EV</div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </Section>
-            )}
-
-            {/* Recent form */}
-            <Section title="Recent Form (Last 30 Games)">
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
-                {[
-                  { label: 'PA',  val: data.recent_form.pa },
-                  { label: 'HR',  val: data.recent_form.hr },
-                  { label: 'AVG', val: data.recent_form.avg },
-                  { label: 'SLG', val: data.recent_form.slg },
-                ].map(s => (
-                  <div key={s.label} style={{ textAlign: 'center', background: 'rgba(255,255,255,0.04)', borderRadius: '10px', padding: '10px 6px' }}>
-                    <div style={{ fontSize: '1rem', fontWeight: 800, color: data.recent_form.hot ? '#00e676' : 'var(--text-primary)' }}>{s.val}</div>
-                    <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', marginTop: '2px' }}>{s.label}</div>
-                  </div>
-                ))}
-              </div>
-              {data.recent_form.hot && (
-                <div style={{ marginTop: '10px', textAlign: 'center', fontSize: '0.72rem', color: '#00e676', fontWeight: 700 }}>
-                  🔥 Batter is HOT in recent form
                 </div>
               )}
-            </Section>
 
-            {/* L7 / L14 Hot Streak Trend */}
-            {data.l7_trend && (
-              <Section title="Hot/Cold Streak Trend">
-                <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '12px', padding: '12px', border: `1px solid ${data.l7_trend.trend_color}33` }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 800, color: data.l7_trend.trend_color }}>{data.l7_trend.trend_label}</span>
-                    <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>vs L30 baseline {data.l7_trend.l30_ops.toFixed(3)}</span>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px' }}>
-                    {[
-                      { label: 'L7 OPS',  val: data.l7_trend.l7_ops.toFixed(3),  sub: `AVG ${data.l7_trend.l7_avg}`, hr: data.l7_trend.l7_hr },
-                      { label: 'L14 OPS', val: data.l7_trend.l14_ops.toFixed(3), sub: `AVG ${data.l7_trend.l14_avg}`, hr: data.l7_trend.l14_hr },
-                      { label: 'L30 OPS', val: data.l7_trend.l30_ops.toFixed(3), sub: 'Season baseline', hr: null },
-                    ].map(t => (
-                      <div key={t.label} style={{ textAlign: 'center', background: 'rgba(255,255,255,0.04)', borderRadius: '8px', padding: '8px 4px' }}>
-                        <div style={{ fontSize: '0.95rem', fontWeight: 900, color: 'var(--text-primary)' }}>{t.val}</div>
-                        <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginTop: '2px' }}>{t.label}</div>
-                        <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)', marginTop: '1px' }}>{t.sub}</div>
-                        {t.hr != null && t.hr > 0 && <div style={{ fontSize: '0.6rem', marginTop: '2px' }}>{t.hr} HR 💣</div>}
+              {activeTab === 'bvp' && (
+                <Section title="Career Head-to-Head">
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px', marginBottom: '8px' }}>
+                    {[{ label: 'PA', val: data.career_bvp.pa }, { label: 'AB', val: data.career_bvp.ab }, { label: 'HR', val: data.career_bvp.hr }, { label: 'AVG', val: data.career_bvp.avg }, { label: 'OPS', val: data.career_bvp.ops }].map(s => (
+                      <div key={s.label} style={{ textAlign: 'center', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', padding: '12px 6px' }}>
+                        <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)' }}>{s.val}</div>
+                        <div style={{ fontSize: '0.58rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', marginTop: '2px' }}>{s.label}</div>
                       </div>
                     ))}
                   </div>
-                </div>
-              </Section>
-            )}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px' }}>
+                    {[{ label: 'OBP', val: data.career_bvp.obp || '.---' }, { label: 'SLG', val: data.career_bvp.slg || '.---' }, { label: '2B', val: data.career_bvp.doubles || 0 }, { label: 'BB', val: data.career_bvp.bb || 0 }, { label: 'SO', val: data.career_bvp.so || 0 }].map(s => (
+                      <div key={s.label} style={{ textAlign: 'center', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', padding: '10px 4px' }}>
+                        <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-secondary)' }}>{s.val}</div>
+                        <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', marginTop: '2px' }}>{s.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                  {data.career_bvp.pa === 0 && <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '12px', textAlign: 'center' }}>No career matchup history found</p>}
+                </Section>
+              )}
 
-            {/* Park Factor */}
-            {data.park_factor && (
-              <Section title="Ballpark Context">
-                <div style={{
-                  background: data.park_factor.hr_factor >= 108 ? 'rgba(255,107,53,0.06)' : data.park_factor.hr_factor <= 93 ? 'rgba(0,188,212,0.06)' : 'rgba(255,255,255,0.03)',
-                  borderRadius: '12px', padding: '12px',
-                  border: `1px solid ${data.park_factor.hr_factor >= 108 ? 'rgba(255,107,53,0.2)' : data.park_factor.hr_factor <= 93 ? 'rgba(0,188,212,0.2)' : 'rgba(255,255,255,0.06)'}`,
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                    <div>
-                      <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-primary)' }}>{data.park_factor.name}</div>
-                      <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                        {data.park_factor.roof === 'dome' ? '🏟️ Dome' : data.park_factor.roof === 'retractable' ? '🔄 Retractable Roof' : '☀️ Open Air'}
-                        {data.park_factor.elevation_ft > 2000 && ` · ⛰️ ${data.park_factor.elevation_ft.toLocaleString()}ft elevation`}
-                      </div>
+              {activeTab === 'statcast' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <Section title="Power Metrics">
+                    <StatBar label="Barrel %"      value={data.statcast.barrel_rate}   max={25}   fmt="pct" color="#ff6b35" />
+                    <StatBar label="Avg Exit Velo" value={data.statcast.avg_exit_velo} max={115}  fmt="mph" color="#4361ee" />
+                    <StatBar label="Hard Hit %"    value={data.statcast.hard_hit_rate} max={65}   fmt="pct" color="#f72585" />
+                    <StatBar label="xwOBA"         value={data.statcast.xwoba}         max={0.50} fmt="3f"  color="#7209b7" />
+                    <StatBar label="ISO (Power)"   value={data.statcast.iso}           max={0.35} fmt="3f"  color="#3a0ca3" />
+                    <StatBar label="xSLG"          value={data.statcast.xslg}          max={0.65} fmt="3f"  color="#4cc9f0" />
+                  </Section>
+                  <Section title="Plate Discipline">
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                      <MiniStat label="Pull %"      value={`${data.statcast.pull_pct.toFixed(1)}%`} />
+                      <MiniStat label="Whiff %"     value={`${data.statcast.whiff_rate.toFixed(1)}%`} />
+                      <MiniStat label="Chase %"     value={`${data.statcast.chase_pct.toFixed(1)}%`} />
+                      <MiniStat label="Z-Contact %" value={`${data.statcast.z_contact.toFixed(1)}%`} />
+                      <MiniStat label="K %"         value={`${data.statcast.k_rate.toFixed(1)}%`} />
+                      <MiniStat label="BB %"        value={`${data.statcast.bb_rate.toFixed(1)}%`} />
                     </div>
-                    <span style={{
-                      fontSize: '0.65rem', fontWeight: 800, padding: '4px 10px', borderRadius: '20px',
-                      background: data.park_factor.hr_factor >= 108 ? 'rgba(255,107,53,0.2)' : data.park_factor.hr_factor <= 93 ? 'rgba(0,188,212,0.15)' : 'rgba(255,255,255,0.08)',
-                      color: data.park_factor.hr_factor >= 108 ? '#ff6b35' : data.park_factor.hr_factor <= 93 ? '#00bcd4' : 'var(--text-muted)',
-                    }}>{data.park_factor.hr_boost_label}</span>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
-                    <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '8px', padding: '8px', textAlign: 'center' }}>
-                      <div style={{ fontSize: '1.1rem', fontWeight: 900, color: data.park_factor.hr_factor > 100 ? '#ff6b35' : '#00bcd4' }}>
-                        {data.park_factor.hr_factor}
+                  </Section>
+                  {data.zone_stats && (data.zone_stats.in_zone_sample > 0 || data.zone_stats.out_zone_sample > 0) && (
+                    <Section title="Zone Swing/Whiff Profile">
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', padding: '14px' }}>
+                        <div style={{ textAlign: 'center' }}>
+                          <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>In-Zone Whiff%</div>
+                          <div style={{ fontSize: '1.6rem', fontWeight: 800, color: data.zone_stats.in_zone_whiff_pct >= 25 ? '#ff1744' : '#00e676', marginTop: '6px' }}>{data.zone_stats.in_zone_whiff_pct.toFixed(1)}%</div>
+                          <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: '4px' }}>{data.zone_stats.in_zone_sample} swings</div>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                          <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Chase Whiff%</div>
+                          <div style={{ fontSize: '1.6rem', fontWeight: 800, color: data.zone_stats.out_zone_whiff_pct >= 40 ? '#ff1744' : '#00e676', marginTop: '6px' }}>{data.zone_stats.out_zone_whiff_pct.toFixed(1)}%</div>
+                          <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: '4px' }}>{data.zone_stats.out_zone_sample} swings</div>
+                        </div>
                       </div>
-                      <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>HR Park Factor</div>
-                      <div style={{ fontSize: '0.5rem', color: 'var(--text-muted)', marginTop: '1px' }}>100 = neutral</div>
-                    </div>
-                    <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '8px', padding: '8px', textAlign: 'center' }}>
-                      <div style={{ fontSize: '1.1rem', fontWeight: 900, color: data.park_factor.run_factor > 100 ? '#f72585' : '#4cc9f0' }}>
-                        {data.park_factor.run_factor}
-                      </div>
-                      <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Run Park Factor</div>
-                      <div style={{ fontSize: '0.5rem', color: 'var(--text-muted)', marginTop: '1px' }}>100 = neutral</div>
-                    </div>
-                  </div>
+                    </Section>
+                  )}
                 </div>
-              </Section>
-            )}
-          </div>
+              )}
+
+              {activeTab === 'pitching' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {data.pitch_matchup.length > 0 && (
+                    <Section title="Pitch-Type Matchup">
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {data.pitch_matchup.map(p => (
+                          <div key={p.pitch_type} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '12px', padding: '12px 14px', display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'center', gap: '8px' }}>
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '5px' }}>
+                                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-primary)' }}>{p.pitch_name}</span>
+                                {verdictBadge(p.verdict)}
+                              </div>
+                              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Usage <strong style={{ color: 'var(--text-secondary)' }}>{p.usage_pct.toFixed(0)}%</strong></span>
+                                {p.avg_velo && <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Velo <strong style={{ color: 'var(--text-secondary)' }}>{p.avg_velo.toFixed(1)} mph</strong></span>}
+                                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Whiff <strong style={{ color: 'var(--text-secondary)' }}>{p.batter_whiff.toFixed(0)}%</strong></span>
+                              </div>
+                            </div>
+                            {p.batter_avg_ev > 0 && (
+                              <div style={{ textAlign: 'right' }}>
+                                <div style={{ fontSize: '1rem', fontWeight: 800, color: '#4cc9f0' }}>{p.batter_avg_ev.toFixed(1)}</div>
+                                <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>avg EV</div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </Section>
+                  )}
+                  {data.pitcher_recent && data.pitcher_recent.games > 0 && (
+                    <Section title={`Pitcher Recent Form (Last ${data.pitcher_recent.games} Starts)`}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', padding: '12px', marginBottom: '8px' }}>
+                        {[{ val: data.pitcher_recent.era, label: 'ERA', color: '#ff5252' }, { val: data.pitcher_recent.whip, label: 'WHIP', color: 'var(--text-primary)' }, { val: `${data.pitcher_recent.k_rate}%`, label: 'K%', color: 'var(--text-primary)' }, { val: data.pitcher_recent.ip, label: 'IP', color: 'var(--text-primary)' }].map(s => (
+                          <div key={s.label} style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '1rem', fontWeight: 800, color: s.color }}>{s.val}</div>
+                            <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginTop: '2px' }}>{s.label}</div>
+                          </div>
+                        ))}
+                      </div>
+                      {(data.pitcher_recent.days_rest != null || data.pitcher_recent.pitch_count_last != null) && (
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          {data.pitcher_recent.days_rest != null && (
+                            <div style={{ flex: 1, textAlign: 'center', borderRadius: '12px', padding: '10px', background: data.pitcher_recent.days_rest <= 3 ? 'rgba(255,23,68,0.1)' : data.pitcher_recent.days_rest >= 8 ? 'rgba(0,188,212,0.08)' : 'rgba(255,255,255,0.03)', border: `1px solid ${data.pitcher_recent.days_rest <= 3 ? 'rgba(255,23,68,0.25)' : data.pitcher_recent.days_rest >= 8 ? 'rgba(0,188,212,0.2)' : 'rgba(255,255,255,0.06)'}` }}>
+                              <div style={{ fontSize: '1.2rem', fontWeight: 900, color: data.pitcher_recent.days_rest <= 3 ? '#ff1744' : data.pitcher_recent.days_rest >= 8 ? '#00bcd4' : 'var(--text-primary)' }}>{data.pitcher_recent.days_rest}d</div>
+                              <div style={{ fontSize: '0.58rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginTop: '2px' }}>Days Rest</div>
+                              {data.pitcher_recent.days_rest <= 3 && <div style={{ fontSize: '0.62rem', color: '#ff1744', marginTop: '3px', fontWeight: 700 }}>⚠️ Short Rest</div>}
+                              {data.pitcher_recent.days_rest >= 8 && <div style={{ fontSize: '0.62rem', color: '#00bcd4', marginTop: '3px', fontWeight: 700 }}>💤 Extra Rest</div>}
+                            </div>
+                          )}
+                          {data.pitcher_recent.pitch_count_last != null && (
+                            <div style={{ flex: 1, textAlign: 'center', borderRadius: '12px', padding: '10px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                              <div style={{ fontSize: '1.2rem', fontWeight: 900, color: data.pitcher_recent.pitch_count_last >= 100 ? '#ff9800' : 'var(--text-primary)' }}>{data.pitcher_recent.pitch_count_last}</div>
+                              <div style={{ fontSize: '0.58rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginTop: '2px' }}>Last Pitches</div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </Section>
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'splits' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <Section title="Home / Away">
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                      <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '12px' }}>
+                        <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#4cc9f0', textTransform: 'uppercase', marginBottom: '8px' }}>Batter</div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '6px' }}><span>Home OPS</span><strong style={{ color: 'var(--text-primary)' }}>{data.batter_splits?.home?.ops || '.---'}</strong></div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}><span>Away OPS</span><strong style={{ color: 'var(--text-primary)' }}>{data.batter_splits?.away?.ops || '.---'}</strong></div>
+                      </div>
+                      <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '12px' }}>
+                        <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#ff6b35', textTransform: 'uppercase', marginBottom: '8px' }}>Pitcher</div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '6px' }}><span>Home OPS</span><strong style={{ color: 'var(--text-primary)' }}>{data.pitcher_splits?.home?.ops || '.---'}</strong></div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}><span>Away OPS</span><strong style={{ color: 'var(--text-primary)' }}>{data.pitcher_splits?.away?.ops || '.---'}</strong></div>
+                      </div>
+                    </div>
+                  </Section>
+                  <Section title="Platoon Splits">
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                      <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '12px' }}>
+                        <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#4cc9f0', textTransform: 'uppercase', marginBottom: '8px' }}>Batter vs {data.pitcher.throws}HP</div>
+                        <div style={{ fontSize: '0.75rem', marginBottom: '4px' }}>AVG: <strong style={{ color: 'var(--text-primary)' }}>{data.batter_splits?.[data.pitcher.throws === 'R' ? 'vs_rhp' : 'vs_lhp']?.avg || '.---'}</strong></div>
+                        <div style={{ fontSize: '0.75rem' }}>OPS: <strong style={{ color: 'var(--text-primary)' }}>{data.batter_splits?.[data.pitcher.throws === 'R' ? 'vs_rhp' : 'vs_lhp']?.ops || '.---'}</strong></div>
+                      </div>
+                      <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '12px' }}>
+                        <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#ff6b35', textTransform: 'uppercase', marginBottom: '8px' }}>Pitcher vs {data.batter.bats}HB</div>
+                        <div style={{ fontSize: '0.75rem', marginBottom: '4px' }}>AVG: <strong style={{ color: 'var(--text-primary)' }}>{data.pitcher_splits?.[data.batter.bats === 'L' ? 'vs_lhb' : 'vs_rhb']?.avg || '.---'}</strong></div>
+                        <div style={{ fontSize: '0.75rem' }}>OPS: <strong style={{ color: 'var(--text-primary)' }}>{data.pitcher_splits?.[data.batter.bats === 'L' ? 'vs_lhb' : 'vs_rhb']?.ops || '.---'}</strong></div>
+                      </div>
+                    </div>
+                  </Section>
+                </div>
+              )}
+
+              {activeTab === 'park' && (
+                data.park_factor ? (
+                  <Section title="Ballpark Context">
+                    <div style={{ background: data.park_factor.hr_factor >= 108 ? 'rgba(255,107,53,0.06)' : data.park_factor.hr_factor <= 93 ? 'rgba(0,188,212,0.06)' : 'rgba(255,255,255,0.03)', borderRadius: '14px', padding: '14px', border: `1px solid ${data.park_factor.hr_factor >= 108 ? 'rgba(255,107,53,0.2)' : data.park_factor.hr_factor <= 93 ? 'rgba(0,188,212,0.2)' : 'rgba(255,255,255,0.06)'}` }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                        <div>
+                          <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-primary)' }}>{data.park_factor.name}</div>
+                          <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '3px' }}>{data.park_factor.roof === 'dome' ? '🏟️ Dome' : data.park_factor.roof === 'retractable' ? '🔄 Retractable' : '☀️ Open Air'}{data.park_factor.elevation_ft > 2000 && ` · ⛰️ ${data.park_factor.elevation_ft.toLocaleString()}ft`}</div>
+                        </div>
+                        <span style={{ fontSize: '0.7rem', fontWeight: 800, padding: '5px 12px', borderRadius: '20px', background: data.park_factor.hr_factor >= 108 ? 'rgba(255,107,53,0.2)' : data.park_factor.hr_factor <= 93 ? 'rgba(0,188,212,0.15)' : 'rgba(255,255,255,0.08)', color: data.park_factor.hr_factor >= 108 ? '#ff6b35' : data.park_factor.hr_factor <= 93 ? '#00bcd4' : 'var(--text-muted)' }}>{data.park_factor.hr_boost_label}</span>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                        <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '10px', padding: '12px', textAlign: 'center' }}>
+                          <div style={{ fontSize: '1.6rem', fontWeight: 900, color: data.park_factor.hr_factor > 100 ? '#ff6b35' : '#00bcd4' }}>{data.park_factor.hr_factor}</div>
+                          <div style={{ fontSize: '0.58rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginTop: '2px' }}>HR Park Factor</div>
+                          <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)', marginTop: '1px' }}>100 = neutral</div>
+                        </div>
+                        <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '10px', padding: '12px', textAlign: 'center' }}>
+                          <div style={{ fontSize: '1.6rem', fontWeight: 900, color: data.park_factor.run_factor > 100 ? '#f72585' : '#4cc9f0' }}>{data.park_factor.run_factor}</div>
+                          <div style={{ fontSize: '0.58rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginTop: '2px' }}>Run Park Factor</div>
+                          <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)', marginTop: '1px' }}>100 = neutral</div>
+                        </div>
+                      </div>
+                    </div>
+                  </Section>
+                ) : (
+                  <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+                    <div style={{ fontSize: '2rem', marginBottom: '8px' }}>🏟️</div>
+                    <p>No park data available</p>
+                  </div>
+                )
+              )}
+
+            </div>
+          </>
         )}
       </div>
     </>
@@ -623,7 +568,7 @@ function BvPFlyout({
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ marginBottom: '1.25rem' }}>
+    <div style={{ marginBottom: '1rem' }}>
       <div style={{ fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--accent-blue-light)', marginBottom: '10px' }}>{title}</div>
       {children}
     </div>
@@ -632,9 +577,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '8px', padding: '8px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{label}</span>
-      <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)' }}>{value}</span>
+    <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '10px', padding: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{label}</span>
+      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)' }}>{value}</span>
     </div>
   );
 }
