@@ -1143,26 +1143,61 @@ export default function BvPModelView({ data }: { data: { game_date: string; tota
         </div>
       </div>
 
+      {/* Mobile responsive layout styles */}
+      <style>{`
+        @media (max-width: 680px) {
+          .bvp-layout { flex-direction: column !important; }
+          .bvp-pitcher-sidebar {
+            max-width: 100% !important; width: 100% !important;
+            min-width: 0 !important; position: static !important;
+            flex: none !important;
+          }
+          .bvp-pitcher-list {
+            flex-direction: row !important;
+            overflow-x: auto !important;
+            scrollbar-width: none !important;
+          }
+          .bvp-pitcher-item {
+            flex-shrink: 0 !important;
+            min-width: 150px !important;
+            max-width: 175px !important;
+          }
+          .bvp-games-grid {
+            grid-template-columns: 1fr !important;
+            min-width: 0 !important;
+          }
+          .bvp-top-sidebar {
+            max-width: 100% !important; width: 100% !important;
+            min-width: 0 !important; position: static !important;
+            flex: none !important;
+          }
+          .bvp-top-list {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+          }
+        }
+      `}</style>
+
       {/* Main Layout: Left Sidebar / Games Grid / Right Sidebar */}
-      <div style={{
+      <div className="bvp-layout" style={{
         display: 'flex',
-        gap: '1.5rem',
+        gap: '1.25rem',
         flexWrap: 'wrap',
         alignItems: 'flex-start',
       }}>
         {/* Pitchers Ranking Sidebar */}
-        <div style={{
-          flex: '1 1 240px',
-          maxWidth: '300px',
+        <div className="bvp-pitcher-sidebar" style={{
+          flex: '1 1 220px',
+          maxWidth: '280px',
           background: 'rgba(255,255,255,0.02)',
           borderRadius: '16px',
           border: '1px solid rgba(255,255,255,0.06)',
-          padding: '1.25rem',
+          padding: '1.1rem',
           position: 'sticky',
           top: '80px',
-          minWidth: '220px',
+          minWidth: '200px',
         }}>
-          <div style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--accent-blue-light)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px' }}>
+          <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--accent-blue-light)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '3px' }}>
             🎯 Today's Probables
           </div>
           <div style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--text-primary)', marginBottom: '8px', fontFamily: "'Outfit', sans-serif" }}>
@@ -1186,14 +1221,14 @@ export default function BvPModelView({ data }: { data: { game_date: string; tota
           )}
 
           {!loadingPitchers && pitcherDataList.length > 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <div className="bvp-pitcher-list" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {pitcherDataList.map((p, idx) => {
                 const isElite = p.xfip !== null && p.xfip < 3.5;
                 const isStruggling = (p.xfip !== null && p.xfip > 4.8) || parseFloat(p.era) > 5.0;
                 const scoreColor = isElite ? '#00e676' : isStruggling ? '#ff1744' : 'var(--text-secondary)';
                 const badgeBg = isElite ? 'rgba(0,230,118,0.1)' : isStruggling ? 'rgba(255,23,68,0.1)' : 'rgba(255,255,255,0.04)';
                 return (
-                  <div key={p.id} style={{
+                  <div key={p.id} className="bvp-pitcher-item" style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     padding: '8px 10px', borderRadius: '8px', background: badgeBg,
                     border: '1px solid rgba(255,255,255,0.03)',
@@ -1221,22 +1256,23 @@ export default function BvPModelView({ data }: { data: { game_date: string; tota
         </div>
 
         {/* Games grid container */}
-        <div style={{
-          flex: '3 1 420px',
+        <div className="bvp-games-grid" style={{
+          flex: '3 1 300px',
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
           gap: '1rem',
+          minWidth: 0,
         }}>
           {data.games.map(game => (
             <GameCard key={game.game_pk} game={game} onSelectBatter={openFlyout} />
           ))}
         </div>
 
-        {/* Top 8 Matchups of the Day Sidebar */}
-        <div style={{
-          flex: '1 1 260px',
-          maxWidth: '300px',
-          minWidth: '240px',
+        {/* Top 16 Matchups Sidebar */}
+        <div className="bvp-top-sidebar" style={{
+          flex: '1 1 220px',
+          maxWidth: '280px',
+          minWidth: '200px',
           position: 'sticky',
           top: '80px',
         }}>
@@ -1282,7 +1318,7 @@ export default function BvPModelView({ data }: { data: { game_date: string; tota
             )}
 
             {!loadingTopMatchups && topMatchups.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <div className="bvp-top-list" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 {topMatchups.map((m, idx) => {
                   const rankColors = ['#ffd700', '#c0c0c0', '#cd7f32'];
                   const rankEmoji = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : null;
